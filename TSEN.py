@@ -8,6 +8,7 @@ import torchvision
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
+import seaborn as sns
 import argparse
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
@@ -64,11 +65,12 @@ np.save(npy_target, target_array, allow_pickle=False)
 print('Pred shape :',output_array.shape)
 print('Target shape :',target_array.shape)
 
+classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 tsne = TSNE(n_components=2, init='pca', random_state=0)
 output_array = tsne.fit_transform(output_array)
-plt.rcParams['figure.figsize'] = 10,10
-plt.scatter(output_array[:, 0], output_array[:, 1], c= target_array[:,0])
-plt.title(title)
-plt.savefig('./'+title+'.png', bbox_inches='tight')
+fig, ax = plt.subplots(1,1,figsize=(10,10))
+sns.scatterplot(x=output_array[:, 0],y=output_array[:, 1],hue=[classes[i] for i in target_array[:,0]],style=[classes[i] for i in target_array[:,0]],ax=ax)
+ax.set_title(title)
+fig.savefig('./'+title+'.png', bbox_inches='tight')
 
 
