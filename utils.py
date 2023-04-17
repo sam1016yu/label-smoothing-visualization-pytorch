@@ -24,6 +24,8 @@ class LabelSmoothingCrossEntropy(nn.Module):
         smooth_loss = -logprobs.mean(dim=-1)
         loss = confidence * nll_loss + smoothing * smooth_loss
         return loss.mean()
+
+
 class SimLabelSmoothingCrossEntropy(nn.Module):
     def __init__(self):
         super(SimLabelSmoothingCrossEntropy, self).__init__()   
@@ -40,21 +42,19 @@ class SimLabelSmoothingCrossEntropy(nn.Module):
                 [0.11, 0.90, 0.00, 0.05, 0.15, 0.05, 0.05, 0.25, 0.20, 1.00]
             ]
     
-    def forward(self, x, target, smoothing=0.1):
-        confidence = 1. - smoothing
+    def forward(self, x, target):
         logprobs = F.log_softmax(x, dim=-1)
         b_size = x.shape[0]
         d =  torch.tensor([[0]*10 for _ in range(b_size)])
         for b in range(b_size):
             for k in range(10): 
                 d[b][k] = self.sim_mat[k][target[b]]
+        
+        d = F.normalize(d,1)
         d = d.to("cuda:0")
-        smooth_loss =  -torch.sum(torch.mul(logprobs,d),dim=1,keepdim=True)
-        smooth_loss = smooth_loss.squeeze(1)
-        nll_loss = -logprobs.gather(dim=-1, index=target.unsqueeze(1))
+        nll_loss =  -torch.sum(torch.mul(logprobs,d),dim=1,keepdim=True)
         nll_loss = nll_loss.squeeze(1)
-        loss = confidence * nll_loss + smoothing * smooth_loss
-        return loss.mean()
+        return nll_loss.mean()
 
 def get_mean_and_std(dataset):
     '''Compute the mean and std value of dataset.'''
