@@ -24,9 +24,9 @@ class LabelSmoothingCrossEntropy(nn.Module):
         smooth_loss = -logprobs.mean(dim=-1)
         loss = confidence * nll_loss + smoothing * smooth_loss
         return loss.mean()
-class LLMSmoothingCrossEntropy(nn.Module):
+class SimLabelSmoothingCrossEntropy(nn.Module):
     def __init__(self):
-        super(LLMSmoothingCrossEntropy, self).__init__()   
+        super(SimLabelSmoothingCrossEntropy, self).__init__()   
         self.sim_mat = [
                 [1.00, 0.15, 0.25, 0.01, 0.02, 0.03, 0.01, 0.12, 0.29, 0.11],
                 [0.15, 1.00, 0.01, 0.10, 0.30, 0.10, 0.10, 0.10, 0.07, 0.90],

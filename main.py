@@ -11,13 +11,14 @@ import torchvision.transforms as transforms
 import os
 import argparse
 import resnet as RN
-from utils import progress_bar, LabelSmoothingCrossEntropy, save_model
+from utils import progress_bar, LabelSmoothingCrossEntropy, SimLabelSmoothingCrossEntropy,save_model
 
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
 parser.add_argument('--ce', action='store_true', help='Cross entropy use')
+parser.add_argument('--sim', action='store_true', help='modified label smoothing with similarity matrix')
 args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -59,6 +60,10 @@ if args.ce == True:
     criterion = nn.CrossEntropyLoss()
     save_path = './checkpoint/CrossEntropy.bin'
     print("Use CrossEntropy")
+elif args.sim == True:
+    criterion = SimLabelSmoothingCrossEntropy()
+    save_path = './checkpoint/SimLabelSmoothing.bin'
+    print("Use Modified Label Smooting")
 else:
     criterion = LabelSmoothingCrossEntropy()
     save_path = './checkpoint/LabelSmoothing.bin'

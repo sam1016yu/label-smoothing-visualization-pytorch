@@ -13,6 +13,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--ce', action='store_true', help='Cross Entropy use')
+parser.add_argument('--sim', action='store_true', help='modified label smoothing with similarity matrix')
 args = parser.parse_args()
 
 model = RN.ResNet18()
@@ -21,14 +22,18 @@ if args.ce == True:
     npy_path = './CE.npy'
     npy_target = './CE_tar.npy'
     title = 'TSNE_CrossEntropy'
-    states = torch.load(path)
+elif args.sim == True:
+    path = './checkpoint/SimLabelSmoothing.bin'
+    npy_path = './LS_sim.npy'
+    npy_target = './LS_sim_tar.npy'
+    title = 'TSNE_modified_LabelSmoothing'
 else:
     path = './checkpoint/LabelSmoothing.bin'
     npy_path = './LS.npy'
     npy_target = './LS_tar.npy'
     title = 'TSNE_LabelSmoothing'
-    states = torch.load(path)
 
+states = torch.load(path)
 model.load_state_dict(states)
 model.linear = nn.Flatten()
 
