@@ -24,6 +24,37 @@ class LabelSmoothingCrossEntropy(nn.Module):
         smooth_loss = -logprobs.mean(dim=-1)
         loss = confidence * nll_loss + smoothing * smooth_loss
         return loss.mean()
+class LLMSmoothingCrossEntropy(nn.Module):
+    def __init__(self):
+        super(LLMSmoothingCrossEntropy, self).__init__()   
+        self.sim_mat = [
+                [1.00, 0.15, 0.25, 0.01, 0.02, 0.03, 0.01, 0.12, 0.29, 0.11],
+                [0.15, 1.00, 0.01, 0.10, 0.30, 0.10, 0.10, 0.10, 0.07, 0.90],
+                [0.25, 0.01, 1.00, 0.30, 0.45, 0.25, 0.30, 0.18, 0.01, 0.00],
+                [0.01, 0.10, 0.30, 1.00, 0.10, 0.80, 0.10, 0.08, 0.00, 0.05],
+                [0.02, 0.30, 0.45, 0.10, 1.00, 0.52, 0.05, 0.90, 0.01, 0.15],
+                [0.03, 0.10, 0.25, 0.80, 0.52, 1.00, 0.20, 0.36, 0.05, 0.05],
+                [0.01, 0.10, 0.30, 0.10, 0.05, 0.20, 1.00, 0.10, 0.10, 0.05],
+                [0.12, 0.10, 0.18, 0.08, 0.90, 0.36, 0.10, 1.00, 0.08, 0.25],
+                [0.29, 0.07, 0.01, 0.00, 0.01, 0.05, 0.10, 0.08, 1.00, 0.20],
+                [0.11, 0.90, 0.00, 0.05, 0.15, 0.05, 0.05, 0.25, 0.20, 1.00]
+            ]
+    
+    def forward(self, x, target, smoothing=0.1):
+        confidence = 1. - smoothing
+        logprobs = F.log_softmax(x, dim=-1)
+        b_size = x.shape[0]
+        d =  torch.tensor([[0]*10 for _ in range(b_size)])
+        for b in range(b_size):
+            for k in range(10): 
+                d[b][k] = self.sim_mat[k][target[b]]
+        d = d.to("cuda:0")
+        smooth_loss =  -torch.sum(torch.mul(logprobs,d),dim=1,keepdim=True)
+        smooth_loss = smooth_loss.squeeze(1)
+        nll_loss = -logprobs.gather(dim=-1, index=target.unsqueeze(1))
+        nll_loss = nll_loss.squeeze(1)
+        loss = confidence * nll_loss + smoothing * smooth_loss
+        return loss.mean()
 
 def get_mean_and_std(dataset):
     '''Compute the mean and std value of dataset.'''
