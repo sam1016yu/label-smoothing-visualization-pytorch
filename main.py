@@ -58,19 +58,32 @@ if device == 'cuda':
 
 if args.ce == True:
     criterion = nn.CrossEntropyLoss()
-    save_path = './checkpoint/CrossEntropy.bin'
+    save_path = 'CrossEntropy'
     print("Use CrossEntropy")
 elif args.sim == True:
     criterion = SimLabelSmoothingCrossEntropy()
-    save_path = './checkpoint/SimLabelSmoothing.bin'
+    save_path = 'SimLabelSmoothing'
     print("Use Modified Label Smooting")
 else:
     criterion = LabelSmoothingCrossEntropy()
-    save_path = './checkpoint/LabelSmoothing.bin'
+    save_path = 'LabelSmoothing'
     print("Use Label Smooting")
 
 optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=0.0001, nesterov= True)
 scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30,60,90])
+
+checkpoint_base_path = "checkpoint_epoch"
+if not os.path.isdir(checkpoint_base_path):
+    os.mkdir(checkpoint_base_path)
+
+log_path_train = f"./{checkpoint_base_path}/{save_path}_train.csv"
+log_path_test = f"./{checkpoint_base_path}/{save_path}_test.csv"
+
+with open(log_path_train,"w") as f:
+    print("Epoch,Loss,Acc",file=f)
+
+with open(log_path_test,"w") as f:
+    print("Epoch,Loss,Acc",file=f)
 
 # Training
 def train(epoch):
@@ -95,6 +108,9 @@ def train(epoch):
         progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
             % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
     scheduler.step()
+    
+    with open(log_path_train,"a") as f:
+        print(f"{epoch},{train_loss/(batch_idx+1)},{100.*correct/total}",file=f)
 
 def test(epoch):
     global best_acc
@@ -116,13 +132,14 @@ def test(epoch):
             progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                 % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
+    with open(log_path_test,"a") as f:
+        print(f"{epoch},{test_loss/(batch_idx+1)},{100.*correct/total}",file=f)
     # Save checkpoint.
     acc = 100.*correct/total
     if acc > best_acc:
         print('Saving..')
-        if not os.path.isdir('checkpoint'):
-            os.mkdir('checkpoint')
-        save_model(net, save_path)
+        save_path_epoch = f"./{checkpoint_base_path}/{save_path}@epoch_{epoch}.bin"
+        save_model(net, save_path_epoch)
         best_acc = acc
 
 
