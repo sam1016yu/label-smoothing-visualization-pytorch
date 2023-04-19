@@ -10,28 +10,36 @@ import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 import seaborn as sns
 import argparse
+import os,sys
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--ce', action='store_true', help='Cross Entropy use')
 parser.add_argument('--sim', action='store_true', help='modified label smoothing with similarity matrix')
+parser.add_argument('--epoch',type=int,required=True,help='which epoch to laod')
 args = parser.parse_args()
 
 model = RN.ResNet18()
+epoch_num = args.epoch
+
 if args.ce == True:
-    path = './checkpoint/CrossEntropy.bin'
+    path = f'./checkpoint_epoch/CrossEntropy@epoch_{epoch_num}.bin'
     npy_path = './CE.npy'
     npy_target = './CE_tar.npy'
-    title = 'TSNE_CrossEntropy'
+    title = f'TSNE_CrossEntropy@epoch_{epoch_num}'
 elif args.sim == True:
-    path = './checkpoint/SimLabelSmoothing.bin'
+    path = f'./checkpoint_epoch/SimLabelSmoothing@epoch_{epoch_num}.bin'
     npy_path = './LS_sim.npy'
     npy_target = './LS_sim_tar.npy'
-    title = 'TSNE_modified_LabelSmoothing'
+    title = f'TSNE_enhanced_LabelSmoothing@epoch_{epoch_num}'
 else:
-    path = './checkpoint/LabelSmoothing.bin'
+    path = f'./checkpoint_epoch/LabelSmoothing@epoch_{epoch_num}.bin'
     npy_path = './LS.npy'
     npy_target = './LS_tar.npy'
-    title = 'TSNE_LabelSmoothing'
+    title = f'TSNE_LabelSmoothing@epoch_{epoch_num}'
+
+
+if not os.path.exists(path):
+    sys.exit(1)
 
 states = torch.load(path)
 model.load_state_dict(states)
@@ -76,6 +84,6 @@ output_array = tsne.fit_transform(output_array)
 fig, ax = plt.subplots(1,1,figsize=(10,10))
 sns.scatterplot(x=output_array[:, 0],y=output_array[:, 1],hue=[classes[i] for i in target_array[:,0]],style=[classes[i] for i in target_array[:,0]],ax=ax)
 ax.set_title(title)
-fig.savefig('./'+title+'.png', bbox_inches='tight')
+fig.savefig('./plots_epoch/'+title+'.png', bbox_inches='tight')
 
 
