@@ -49,9 +49,12 @@ class SimLabelSmoothingCrossEntropy(nn.Module):
         for b in range(b_size):
             for k in range(10): 
                 d[b][k] = self.sim_mat[k][target[b]]
-        
+            prob_sum_50_percent = sum(d[b]) - 1
+            d[b][target[b]] = 0.5
+            for x in range(len(d[b])):
+                if x != target[b]:
+                    d[b][x] = (d[b][x] / prob_sum_50_percent) * 0.5
         d = torch.tensor(d)
-        d = F.normalize(d,1)
         d = d.to("cuda:0")
         nll_loss =  -torch.sum(torch.mul(logprobs,d),dim=1,keepdim=True)
         nll_loss = nll_loss.squeeze(1)
