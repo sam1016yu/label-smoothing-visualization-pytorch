@@ -71,6 +71,6 @@ output_array = tsne.fit_transform(output_array)
 fig, ax = plt.subplots(1,1,figsize=(10,10))
 sns.scatterplot(x=output_array[:, 0],y=output_array[:, 1],hue=[classes[i] for i in target_array[:,0]],style=[classes[i] for i in target_array[:,0]],ax=ax)
 ax.set_title(title)
-fig.savefig('./'+title+'.png', bbox_inches='tight')
+fig.savefig('./'+title+'.pdf', bbox_inches='tight')
 
 
